@@ -1,13 +1,11 @@
 import express from "express"
-import { sum } from "./utils"
+import usersRouter from "~/routes/users.routes"
+import databaseService from "~/services/database.service"
 const app = express()
 const PORT = 3000
-
-app.get("/", (req, res) => {
-  const value = sum({ a: 1, b: 2 })
-  res.send("Hello World" + value)
-})
-
+app.use(express.json()) // Middleware to parse JSON bodies
+app.use("/user", usersRouter)
+databaseService.connect().catch(console.dir) // Initialize the database connection
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`)
 })
