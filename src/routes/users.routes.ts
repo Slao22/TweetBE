@@ -4,6 +4,6 @@ import { loginController, registerController } from "~/controllers/users.control
 const usersRouter = Router()
 
 usersRouter.post("/login", loginValidation, loginController)
-usersRouter.post("/register", loginValidation, registerController)
+usersRouter.post("/register", registerValidation, registerController)
 
 export default usersRouter
