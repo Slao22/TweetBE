@@ -4,7 +4,7 @@ import { loginController, registerController } from "~/controllers/users.control
 import { wrapRequestHandler } from "~/utils/handlers"
 const usersRouter = Router()
 
-usersRouter.post("/login", loginValidation, loginController)
+usersRouter.post("/login", loginValidation, wrapRequestHandler(loginController))
 usersRouter.post("/register", registerValidation, wrapRequestHandler(registerController))
 
 export default usersRouter

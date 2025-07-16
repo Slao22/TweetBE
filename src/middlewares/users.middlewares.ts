@@ -1,19 +1,53 @@
-import { Request, Response, NextFunction } from "express"
 import { checkSchema } from "express-validator"
 import { USER_MESSAGES } from "~/constants/messages"
-import { ErrorWithStatus } from "~/models/Errors"
+import databaseService from "~/services/database.service"
 import usersService from "~/services/users.service"
+import { hashPassword } from "~/utils/crypto"
 import { validate } from "~/utils/validation"
-export const loginValidation = (req: Request, res: Response, next: NextFunction) => {
-  const { email, password } = req.body
-
-  if (!email || !password) {
-    res.status(400).json({ error: "Email and password are required" })
-    return
-  }
-
-  next()
-}
+export const loginValidation = validate(
+  checkSchema({
+    email: {
+      isEmail: {
+        errorMessage: USER_MESSAGES.EMAIL_IS_INVALID
+      },
+      trim: true,
+      custom: {
+        options: async (value, { req }) => {
+          console.log(value, "value")
+          console.log(req.body, "req.body")
+          const user = await databaseService.users.findOne({ email: value, password: hashPassword(req.body.password) })
+          if (user === null) {
+            throw new Error(USER_MESSAGES.EMAIL_OR_PASSWORD_IS_INCORRECT)
+          }
+          req.user = user
+          return true
+        }
+      }
+    },
+    password: {
+      notEmpty: {
+        errorMessage: USER_MESSAGES.PASSWORD_IS_REQUIRED
+      },
+      isLength: {
+        options: { min: 6, max: 100 },
+        errorMessage: USER_MESSAGES.PASSWORD_LENGTH_MUST_BE_BETWEEN_6_AND_100
+      },
+      isString: {
+        errorMessage: USER_MESSAGES.PASSWORD_MUST_BE_STRING
+      },
+      isStrongPassword: {
+        options: {
+          minLength: 6,
+          minLowercase: 1,
+          minUppercase: 1,
+          minNumbers: 1,
+          minSymbols: 1
+        },
+        errorMessage: USER_MESSAGES.PASSWORD_MUST_BE_STRONG
+      }
+    }
+  })
+)
 
 export const registerValidation = validate(
   checkSchema({
@@ -30,9 +64,6 @@ export const registerValidation = validate(
     email: {
       isEmail: {
         errorMessage: USER_MESSAGES.EMAIL_IS_INVALID
-      },
-      notEmpty: {
-        errorMessage: USER_MESSAGES.EMAIL_IS_REQUIRED
       },
       trim: true,
       custom: {
