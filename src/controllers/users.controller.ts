@@ -1,27 +1,34 @@
+import { config } from "dotenv"
 import { NextFunction, Request, Response } from "express"
 import { ParamsDictionary } from "express-serve-static-core"
+import { result } from "lodash"
 import { ObjectId } from "mongodb"
+import { access } from "node:fs"
 import { UserVerifyStatus } from "~/constants/enums"
 import HTTP_STATUS from "~/constants/httpStatus"
 import { USER_MESSAGES } from "~/constants/messages"
 import {
+  ChangePasswordReqBody,
+  FollowRequestBody,
   ForgotPasswordReqBody,
   LoginReqBody,
   LogoutReqBody,
   RegisterReqBody,
   ResetPasswordReqBody,
   TokenPayload,
+  UnFollowRequestParams,
+  UpdateMeReqBody,
   VerifyEmailReqBody,
   VerifyForgotPasswordReqBody
 } from "~/models/requests/User.requests"
 import User from "~/models/schemas/User.schema"
 import databaseService from "~/services/database.service"
 import usersService from "~/services/users.service"
-
+config()
 export const loginController = async (req: Request<ParamsDictionary, any, LoginReqBody>, res: Response) => {
   const user = req.user as User
   const userId = user._id as ObjectId
-  const result = await usersService.login(userId.toString())
+  const result = await usersService.login({ userId: userId.toString(), verify: user.verify })
   return res.json({ message: USER_MESSAGES.LOGIN_SUCCESS, result })
 }
 export const registerController = async (
@@ -90,8 +97,11 @@ export const forgotPasswordController = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { _id } = req.user as User
-  const result = await usersService.forgotPassword((_id as ObjectId).toString())
+  const { _id, verify } = req.user as User
+  const result = await usersService.forgotPassword({
+    userId: (_id as ObjectId).toString(),
+    verify
+  })
   return res.json(result)
 }
 
@@ -122,4 +132,60 @@ export const getMeController = async (
   const { userId } = req.decoded_authorization as TokenPayload
   const user = await usersService.getMe(userId)
   return res.json({ message: USER_MESSAGES.GET_ME_SUCCESS, result: user })
+}
+export const getProfileController = async (req: Request<{ username: string }>, res: Response, next: NextFunction) => {
+  const { username } = req.params
+  const user = await usersService.getProfile(username)
+  return res.json({ message: USER_MESSAGES.GET_PROFILE_SUCCESS, result: user })
+}
+
+export const followController = async (
+  req: Request<ParamsDictionary, any, FollowRequestBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { userId } = req.decoded_authorization as TokenPayload
+  const { followed_user_id } = req.body
+  const result = await usersService.follow(userId, followed_user_id)
+  return res.json(result)
+}
+
+export const deleteFollowController = async (
+  req: Request<UnFollowRequestParams>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { userId } = req.decoded_authorization as TokenPayload
+  const { userId: followed_user_id } = req.params
+  const result = await usersService.deleteFollow(userId, followed_user_id)
+  return res.json(result)
+}
+
+export const updatedMeController = async (
+  req: Request<ParamsDictionary, any, UpdateMeReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { userId } = req.decoded_authorization as TokenPayload
+  const { body } = req
+  const result = await usersService.updateMe(userId, body)
+  return res.json(result)
+}
+
+export const changePasswordController = async (
+  req: Request<ParamsDictionary, any, ChangePasswordReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { userId } = req.decoded_authorization as TokenPayload
+  const { password } = req.body
+  const result = await usersService.changePassword(userId, password)
+  return res.json(result)
+}
+
+export const oAuthController = async (req: Request, res: Response, next: NextFunction) => {
+  const { code } = req.query
+  const result = await usersService.oAuth(code as string)
+  const urlRedirect = `${process.env.CLIENT_REDIRECT_CALLBACK as string}?access_token=${result.accessToken}&refresh_token=${result.refreshToken}&new_user=${result.newUser}`
+  return res.redirect(urlRedirect)
 }
