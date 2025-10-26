@@ -48,6 +48,7 @@ export const USER_MESSAGES = {
   USERNAME_MUST_BE_STRING: "Username must be a string",
   USERNAME_MAX_LENGTH_30: "Username must be from 1 to 30 characters",
   USERNAME_MIN_LENGTH_3: "Username must be from 3 to 30 characters",
+  REFRESH_TOKEN_SUCCESS: "REFRESH_TOKEN_SUCCESS",
   USERNAME_INVALID:
     "Username must be 4-15 characters long, can contain letters, numbers, underscores, and cannot be all numbers",
   IMAGE_MUST_BE_URL: "Image must be a valid URL",
@@ -61,5 +62,19 @@ export const USER_MESSAGES = {
   OLD_PASSWORD_INCORRECT: "Old password is incorrect",
   CHANGE_PASSWORD_SUCCESS: "Change password success",
   PASSWORD_IS_NOT_SAME_AS_OLD: "New password must be different from the old password",
-  GMAIL_NOT_VERIFIED_GOOGLE: "Gmail is not verified by Google"
+  GMAIL_NOT_VERIFIED_GOOGLE: "Gmail is not verified by Google",
+  UPLOAD_SUCCESS: "Upload Success"
+} as const
+
+export const TWEETS_MESSAGES = {
+  INVALID_TYPE: "Invalid tweet type",
+  INVALID_AUDIENCE: "Invalid tweet audience",
+  PARENT_ID_MUST_BE_A_VALID_TWEET_ID: "parent_id must be a valid tweet ID",
+  INVALID_PARENT_ID: "Invalid parent_id",
+  PARENT_ID_MUST_BE_NULL: "parent_id must be null ",
+  CONTENT_MUST_BE_A_NON_EMPTY_STRING: "Content must be a non-empty string",
+  CONTENT_MUST_BE_EMPTY_STRING: "Content must be an empty string",
+  HASHTAGS_MUST_BE_ARRAY_OF_STRINGS: "Hashtags must be an array of strings",
+  MENTIONS_MUST_BE_ARRAY_OF_USER_IDS: "Mentions must be an array of user IDs",
+  MEDIAS_MUST_BE_ARRAY_OF_MEDIA_OBJECTS: "Medias must be an array of media objects"
 } as const

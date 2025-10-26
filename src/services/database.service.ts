@@ -23,6 +23,29 @@ class DatabaseService {
       throw new Error("Failed to connect to the database: " + error)
     }
   }
+  async indexUsers() {
+    const exists = await this.users.indexExists(["email_1_password_1", "email_1", "username_1"])
+    if (!exists) {
+      this.users.createIndex({ email: 1, password: 1 })
+      this.users.createIndex({ email: 1 }, { unique: true })
+      this.users.createIndex({ username: 1 }, { unique: true })
+    }
+  }
+
+  async indexRefreshTokens() {
+    const exists = await this.refreshTokens.indexExists(["token_1", "exp_1"])
+    if (!exists) {
+      this.refreshTokens.createIndex({ token: 1 })
+      this.refreshTokens.createIndex({ exp: 1 }, { expireAfterSeconds: 0 })
+    }
+  }
+  async indexFollowers() {
+    const exists = await this.followers.indexExists(["userId_1", "followedUserId_1"])
+    if (!exists) {
+      this.followers.createIndex({ userId: 1, followedUserId: 1 })
+    }
+  }
+
   get users(): Collection<User> {
     return this.db.collection(process.env.DB_COLLECTION_USERS as string)
   }

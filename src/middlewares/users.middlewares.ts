@@ -301,7 +301,6 @@ export const emailVerifyTokenValidator = validate(
                 token: value,
                 secretOrPublicKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string
               })
-              // console.log(decoded_email_verify_token)
               ;(req as Request).decode_email_verify_token = decoded_email_verify_token
             } catch (error) {
               throw new ErrorWithStatus({
@@ -363,6 +362,7 @@ export const resetPasswordValidator = validate(
 
 export const verifiedUserValidator = (req: Request, res: any, next: any) => {
   const { verify } = req.decoded_authorization as TokenPayload
+  console.log(req.decoded_authorization)
   if (verify !== UserVerifyStatus.Verified) {
     next(
       new ErrorWithStatus({
