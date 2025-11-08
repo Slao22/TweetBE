@@ -17,6 +17,7 @@
   "license": "ISC",
   "devDependencies": {
     "@eslint/js": "^9.25.1",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/express-serve-static-core": "^5.0.7",
     "@types/jsonwebtoken": "8.5.9",
@@ -24,6 +25,7 @@
     "@types/mime": "^4.0.0",
     "@types/minimist": "^1.2.5",
     "@types/node": "^22.14.1",
+    "cors": "^2.8.5",
     "eslint": "^9.25.1",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.2.6",
@@ -38,9 +40,11 @@
   },
   "dependencies": {
     "-": "^0.0.1",
+    "@types/cookie-parser": "^1.4.10",
     "@types/formidable": "^3.4.6",
     "D": "^1.0.0",
     "axios": "^1.12.2",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
