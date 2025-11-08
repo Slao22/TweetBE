@@ -41,7 +41,7 @@ app.use(
         callback(new Error("❌ Not allowed by CORS"))
       }
     },
-    credentials: false // nếu dùng cookie / auth header thi chuyển thành true
+    credentials: true // nếu dùng cookie / auth header thi chuyển thành true
   })
 )
 initFolder() // Initialize necessary folders

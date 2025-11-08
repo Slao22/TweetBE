@@ -1,14 +1,12 @@
 import { getProfile } from "@/services/auth.service";
-import { useAuthStore } from "@/store/auth.store";
 import { useQuery } from "@tanstack/react-query";
 
-const useGetUserProfile = () => {
-    const { access_token } = useAuthStore();
-
+const useGetUserProfile = (options?: { enabled?: boolean }) => {
     return useQuery({
         queryKey: ["getUserProfile"],
         queryFn: () => getProfile(),
-        enabled: !!access_token, // chỉ fetch khi có token
+        enabled: options?.enabled ?? true,
+        retry: false,
     });
 };
 

@@ -31,14 +31,13 @@ export default function LoginForm() {
     } = useForm<LoginFormSchema>({
         resolver: zodResolver(loginSchema),
     });
-    const { setTokens, setUser } = useAuthStore();
+    const { setUser } = useAuthStore();
     const { isError, isPending, mutateAsync } = useLogin();
-    const { data } = useGetUserProfile();
+    const { data, refetch, isLoading } = useGetUserProfile({ enabled: false });
     const onSubmit = async (data: LoginFormSchema) => {
         try {
-            const res = await mutateAsync(data);
-            const { accessToken, refreshToken } = res.result;
-            setTokens(accessToken, refreshToken);
+            await mutateAsync(data);
+            refetch();
             window.location.href = "/home";
         } catch (error) {
             const err = error as ApiErrorType;
@@ -47,7 +46,9 @@ export default function LoginForm() {
     };
     useEffect(() => {
         if (data) setUser(data);
-    }, [data]);
+    }, [data, setUser]);
+    if (isLoading) return <p>Loading...</p>;
+
     return (
         <>
             <Dialog>

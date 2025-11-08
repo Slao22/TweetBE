@@ -1,28 +1,16 @@
 import axios, { AxiosError } from "axios";
-import { useAuthStore } from "@/store/auth.store";
-import { refreshToken } from "@/services/auth.service";
 import { ApiErrorType, ApiResponse } from "@/types/common";
+import { useAuthStore } from "@/store/auth.store";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 const api = axios.create({
     baseURL: BASE_URL,
     headers: { "Content-Type": "application/json" },
-    withCredentials: false,
+    withCredentials: true, // 👈 Quan trọng: cookie gửi tự động
 });
 
-// === Attach access token before each request ===
-api.interceptors.request.use(
-    (config) => {
-        const token = useAuthStore.getState().access_token;
-        if (token) config.headers.Authorization = `Bearer ${token}`;
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
-
-// 🧩 Response Interceptor – xử lý lỗi thành Error chuẩn
-// 🧩 Response: format lại lỗi thành ApiErrorType
+// 🧩 Chuẩn hóa lỗi
 api.interceptors.response.use(
     (response) => response,
     (error: AxiosError<ApiResponse>) => {
@@ -35,52 +23,49 @@ api.interceptors.response.use(
             status: error.response?.status,
             errors: error.response?.data?.errors || null,
         };
-
         return Promise.reject(apiError);
     }
 );
 
-// === Handle 401 + refresh token queue ===
+// 🧠 Auto refresh bằng cookie
 let isRefreshing = false;
-let refreshQueue: Array<(token: string | null) => void> = [];
+let failedQueue: Array<{
+    resolve: (value?: unknown) => void;
+    reject: (reason?: any) => void;
+}> = [];
 
-const processQueue = (token: string | null) => {
-    refreshQueue.forEach((cb) => cb(token));
-    refreshQueue = [];
+const processQueue = (error: any, response: any) => {
+    failedQueue.forEach((p) => (error ? p.reject(error) : p.resolve(response)));
+    failedQueue = [];
 };
 
 api.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const originalRequest: any = error.config;
 
+        // Nếu là lỗi 401 và chưa retry
         if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-
             if (isRefreshing) {
+                // ⏳ Nếu đang refresh, chờ refresh xong rồi retry
                 return new Promise((resolve, reject) => {
-                    refreshQueue.push((token) => {
-                        if (!token) reject(error);
-                        else {
-                            originalRequest.headers.Authorization = `Bearer ${token}`;
-                            resolve(api(originalRequest));
-                        }
-                    });
-                });
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then(() => api(originalRequest))
+                    .catch((err) => Promise.reject(err));
             }
 
+            originalRequest._retry = true;
             isRefreshing = true;
 
             try {
-                const newToken = await refreshToken();
-                processQueue(newToken);
-                if (!newToken) throw new Error("No token received");
+                // 🍪 Gọi refresh-token (cookie tự gửi)
+                await api.post("/user/refresh-token");
 
-                originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                return api(originalRequest);
+                processQueue(null, null);
+                return api(originalRequest); // retry lại request
             } catch (err) {
-                processQueue(null);
+                processQueue(err, null);
                 useAuthStore.getState().logout();
                 if (typeof window !== "undefined")
                     window.location.href = "/login";

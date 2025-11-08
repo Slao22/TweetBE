@@ -1,12 +1,10 @@
-import { User } from "@/app/models/user";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { User } from "@/app/models/user";
 
 interface AuthState {
-    access_token: string | null;
-    refresh_token: string | null;
     user: User | null;
-    setTokens: (access_token: string, refresh_token: string) => void;
+    isAuthenticated: boolean;
     setUser: (user: User | null) => void;
     logout: () => void;
 }
@@ -14,25 +12,20 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
-            access_token: null,
-            refresh_token: null,
             user: null,
+            isAuthenticated: false,
 
-            setTokens: (access_token, refresh_token) =>
-                set({ access_token, refresh_token }),
-
-            setUser: (user) => set({ user }),
+            setUser: (user) => set({ user, isAuthenticated: !!user }),
 
             logout: () => {
-                set({ access_token: null, refresh_token: null, user: null });
+                set({ user: null, isAuthenticated: false });
             },
         }),
         {
-            name: "auth-storage", // key lưu trong localStorage
+            name: "auth-storage", // tên key trong localStorage
             partialize: (state) => ({
-                access_token: state.access_token,
-                refresh_token: state.refresh_token,
                 user: state.user,
+                isAuthenticated: state.isAuthenticated,
             }),
         }
     )

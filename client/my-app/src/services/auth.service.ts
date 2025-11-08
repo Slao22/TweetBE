@@ -36,14 +36,13 @@ export const getGoogleAuthURL = async () => {
 };
 
 export const refreshToken = async (): Promise<string> => {
-    const refresh = useAuthStore.getState().refresh_token;
-    if (!refresh) throw new Error("No refresh token");
-
-    const { data } = await api.post("/auth/refresh", { refreshToken: refresh });
-    const newToken = data.accessToken;
-
-    useAuthStore.getState().setTokens(newToken, refresh);
-    return newToken;
+    // const refresh = useAuthStore.getState().refresh_token;
+    // if (!refresh) throw new Error("No refresh token");
+    // const { data } = await api.post("/auth/refresh", { refreshToken: refresh });
+    // const newToken = data.accessToken;
+    // useAuthStore.getState().setTokens(newToken, refresh);
+    // return newToken;
+    return "newToken";
 };
 
 export const logout = () => {

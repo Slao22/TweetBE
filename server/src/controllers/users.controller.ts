@@ -30,6 +30,19 @@ export const loginController = async (req: Request<ParamsDictionary, any, LoginR
   const user = req.user as User
   const userId = user._id as ObjectId
   const result = await usersService.login({ userId: userId.toString(), verify: user.verify })
+  const { accessToken, refreshToken } = result
+  res.cookie("access_token", accessToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 15 * 60 * 1000 // 15 phút
+  })
+
+  // Set refresh token cookie
+  res.cookie("refresh_token", refreshToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
+  })
   return res.json({ message: USER_MESSAGES.LOGIN_SUCCESS, result })
 }
 export const registerController = async (
@@ -45,18 +58,45 @@ export const registerController = async (
 }
 
 export const logoutController = async (req: Request<ParamsDictionary, any, LogoutReqBody>, res: Response) => {
-  const { refresh_token } = req.body
+  // const { refresh_token } = req.body
+  const refresh_token = req.cookies.refresh_token
+  if (!refresh_token) {
+    return res.status(400).json({ message: "No refresh token found" })
+  }
+  res.clearCookie("access_token", {
+    httpOnly: true,
+    sameSite: "lax"
+  })
+
+  res.clearCookie("refresh_token", {
+    httpOnly: true,
+    sameSite: "lax"
+  })
+
   const result = await usersService.logout(refresh_token)
   return res.json(result)
 }
 
-export const refreshTokenController = async (
-  req: Request<ParamsDictionary, any, RefreshTokenReqBody>,
-  res: Response
-) => {
-  const { refresh_token } = req.body
+export const refreshTokenController = async (req: Request<ParamsDictionary, any, any>, res: Response) => {
+  const refresh_token = req.cookies.refresh_token
+  if (!refresh_token) {
+    return res.status(401).json({ message: "No refresh token provided" })
+  }
   const { userId, verify, exp } = req.decoded_refresh_token as TokenPayload
   const result = await usersService.refreshToken({ userId, verify, refresh_token, exp })
+  const { access_token, refresh_token: new_refresh_token } = result
+  res.cookie("access_token", access_token, {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 15 * 60 * 1000 // 15 phút
+  })
+
+  // Set refresh token cookie
+  res.cookie("refresh_token", new_refresh_token, {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
+  })
   return res.json({
     message: USER_MESSAGES.REFRESH_TOKEN_SUCCESS,
     result
